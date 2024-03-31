@@ -76,3 +76,26 @@ func updateEvent(context *gin.Context) {
 	// Successfully updated the event
 	context.JSON(200, gin.H{"message": "Updated successfully"})
 }
+
+func deleteEvent (context *gin.Context) {
+	eventId, err := strconv.ParseInt(context.Param("id"), 10, 64)
+	if err != nil {
+		context.JSON(400, gin.H{"message": "Invalid event ID"})
+		return
+	}
+
+	event, err := models.GetEventById(eventId)
+	if err != nil {
+		context.JSON(500, gin.H{"message": "Event not found"})
+		return
+	}
+
+	event.Delete()
+	if err != nil {
+		context.JSON(400, gin.H{"message": "Couldn't delete event"})
+		return
+	}
+
+	context.JSON(200, gin.H{"message": "Deleted Successfully"})
+
+}
