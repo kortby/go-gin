@@ -15,7 +15,7 @@ SQLite3
 
 ## Installation
 Clone the repository
-`git clone https://github.com/<your-username>/event-management-api.git`
+`git clone https://github.com/kortby/go-gin.git`
 
 
 `cd event-management-api`
