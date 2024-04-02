@@ -1,10 +1,10 @@
 POST http://127.0.0.1:8080/events
 Content-Type: application/json
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6InRlc3QyQHRlc3QuY28iLCJleHAiOjE3MTIwMjM4OTksInVzZXJJZCI6MX0.e44l8hJ8Gj7fR2Q3cizEXqIGKEyiIh2LpLNoEqYtxPE
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6InRlc3QxQHRlc3QuY28iLCJleHAiOjE3MTIwMjg5NjAsInVzZXJJZCI6Mn0.BMS05f6QScr0Qk8MmwmYcMIIxhez76Rw_tGPebCtbBQ
 
 {
-    "name": "test event 43",
-    "description": "A test description with dummy text 433",
-    "location": "Location somewhere 43",
+    "name": "test event 5",
+    "description": "A test description with dummy text 53",
+    "location": "Location somewhere 53",
     "datetime": "2024-01-01T15:30:00.000Z"
 }

@@ -2,11 +2,9 @@ package routes
 
 import (
 	"example/gingonic/models"
-	"example/gingonic/utils"
 	"fmt"
 	"net/http"
 	"strconv"
-	"strings"
 
 	"github.com/gin-gonic/gin"
 )
@@ -36,47 +34,33 @@ func getEvent(context *gin.Context) {
 }
 
 func createEvent(context *gin.Context) {
-	authHeader := context.Request.Header.Get("Authorization")
-	if authHeader == "" {
-		context.JSON(http.StatusUnauthorized, gin.H{"message": "Authorization header is missing."})
+	email, exists := context.Get("email")
+	if !exists {
+		context.JSON(http.StatusBadRequest, gin.H{"error": "User email not found"})
 		return
 	}
 
-	// Log the received Authorization header for debugging
-	fmt.Printf("Received Authorization header: %s\n", authHeader)
-
-	parts := strings.Split(authHeader, " ")
-	if len(parts) != 2 || strings.ToLower(parts[0]) != "bearer" {
-		context.JSON(http.StatusUnauthorized, gin.H{"message": "Authorization header format must be 'Bearer {token}'."})
+	userIdInterface, exists := context.Get("userId")
+	if !exists {
+		context.JSON(http.StatusBadRequest, gin.H{"error": "User ID not found"})
 		return
 	}
 
-	token := parts[1]
-
-	// Verify the token
-	claims, err := utils.VerifyToken(token)
-	if err != nil {
-		context.JSON(http.StatusUnauthorized, gin.H{"message": "Invalid or expired token.", "details": err.Error()})
+	// Asserting the userId is of type float64
+	userIdFloat, ok := userIdInterface.(float64)
+	if !ok {
+		context.JSON(http.StatusInternalServerError, gin.H{"error": "User ID format is invalid"})
 		return
 	}
 
-	// Log claims for debugging
-	fmt.Printf("Claims: %#v\n", claims)
-
-	// Extract user information from claims
-	email, okEmail := claims["email"].(string)
-	userIdFloat, okUserId := claims["userId"].(float64) // JSON unmarshalling often parses numbers to float64
-	if !okEmail || !okUserId {
-		context.JSON(http.StatusUnauthorized, gin.H{"message": "Invalid token claims."})
-		return
-	}
+	// Convert float64 to int64 since JSON unmarshalling turns numbers into float64 by default
 	userId := int64(userIdFloat)
 
 	fmt.Println("User Email:", email, "UserID:", userId)
 
 	var event models.Event
 	if err := context.ShouldBindJSON(&event); err != nil {
-		context.JSON(400, gin.H{"error": "Could not parse data", "details": err.Error()})
+		context.JSON(http.StatusBadRequest, gin.H{"error": "Could not parse event data", "details": err.Error()})
 		return
 	}
 

@@ -2,6 +2,6 @@ POST http://127.0.0.1:8080/login
 Content-Type: application/json
 
 {
-    "email": "test2@test.co",
-    "password": "test"
+    "email": "test1@test.co",
+    "password": "test1"
 }
