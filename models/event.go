@@ -1,43 +1,42 @@
 package models
 
 import (
-	"time"
 	"example/gingonic/db"
+	"time"
 )
 
 type Event struct {
-    ID          int64     `json:"id"`
-    Name        string    `json:"name" binding:"required"`
-    Description string    `json:"description" binding:"required"`
-    Location    string    `json:"location" binding:"required"`
-    DateTime    time.Time `json:"datetime" binding:"required"`
-    UserID      int       `json:"user_id"`
+	ID          int64     `json:"id"`
+	Name        string    `json:"name" binding:"required"`
+	Description string    `json:"description" binding:"required"`
+	Location    string    `json:"location" binding:"required"`
+	DateTime    time.Time `json:"datetime" binding:"required"`
+	UserID      int64     `json:"user_id"`
 }
 
-
 func (e *Event) Save() error {
-    query := `INSERT INTO events(name, description, location, datetime, user_id)
+	query := `INSERT INTO events(name, description, location, datetime, user_id)
               VALUES (?, ?, ?, ?, ?)`
-    sqlStatement, err := db.DB.Prepare(query)
-    if err != nil {
-        return err
-    }
-    defer sqlStatement.Close()
+	sqlStatement, err := db.DB.Prepare(query)
+	if err != nil {
+		return err
+	}
+	defer sqlStatement.Close()
 
 	ParsedDatetime := e.DateTime.Format("2006-01-02 15:04:05")
 
-    result, err := sqlStatement.Exec(e.Name, e.Description, e.Location, ParsedDatetime, e.UserID)
-    if err != nil {
-        return err
-    }
+	result, err := sqlStatement.Exec(e.Name, e.Description, e.Location, ParsedDatetime, e.UserID)
+	if err != nil {
+		return err
+	}
 
-    id, err := result.LastInsertId()
-    if err != nil {
-        return err
-    }
+	id, err := result.LastInsertId()
+	if err != nil {
+		return err
+	}
 
-    e.ID = id
-    return nil
+	e.ID = id
+	return nil
 }
 
 func GetAllEvents() ([]Event, error) {
@@ -60,12 +59,11 @@ func GetAllEvents() ([]Event, error) {
 
 		events = append(events, event)
 	}
-	
+
 	return events, nil
 }
 
-
-func GetEventById(id int64) (*Event, error){
+func GetEventById(id int64) (*Event, error) {
 	query := `SELECT * FROM events WHERE id = ?`
 	row := db.DB.QueryRow(query, id)
 	// defer rows.Close()
@@ -84,11 +82,11 @@ func GetEventById(id int64) (*Event, error){
 func (event Event) Update() error {
 	query := `UPDATE events SET name = ?, description = ?, location = ?, datetime = ? WHERE id = ?`
 	sqlStatement, err := db.DB.Prepare(query)
-    if err != nil {
+	if err != nil {
 		return err
-    }
-    defer sqlStatement.Close()
-	
+	}
+	defer sqlStatement.Close()
+
 	_, err = sqlStatement.Exec(event.Name, event.Description, event.Location, event.DateTime, event.ID)
 	return err
 }
@@ -96,10 +94,10 @@ func (event Event) Update() error {
 func (event Event) Delete() error {
 	query := `DELETE FROM events WHERE id = ?`
 	sqlStatement, err := db.DB.Prepare(query)
-    if err != nil {
+	if err != nil {
 		return err
-    }
-    defer sqlStatement.Close()
+	}
+	defer sqlStatement.Close()
 	_, err = sqlStatement.Exec(event.ID)
 	return err
 }

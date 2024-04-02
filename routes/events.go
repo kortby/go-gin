@@ -1,11 +1,14 @@
 package routes
 
 import (
-	"github.com/gin-gonic/gin"
 	"example/gingonic/models"
-	"strconv"
-	"net/http"
+	"example/gingonic/utils"
 	"fmt"
+	"net/http"
+	"strconv"
+	"strings"
+
+	"github.com/gin-gonic/gin"
 )
 
 func getEvents(context *gin.Context) {
@@ -15,7 +18,7 @@ func getEvents(context *gin.Context) {
 		return
 	}
 	context.JSON(200, events)
-	
+
 }
 
 func getEvent(context *gin.Context) {
@@ -33,13 +36,51 @@ func getEvent(context *gin.Context) {
 }
 
 func createEvent(context *gin.Context) {
+	authHeader := context.Request.Header.Get("Authorization")
+	if authHeader == "" {
+		context.JSON(http.StatusUnauthorized, gin.H{"message": "Authorization header is missing."})
+		return
+	}
+
+	// Log the received Authorization header for debugging
+	fmt.Printf("Received Authorization header: %s\n", authHeader)
+
+	parts := strings.Split(authHeader, " ")
+	if len(parts) != 2 || strings.ToLower(parts[0]) != "bearer" {
+		context.JSON(http.StatusUnauthorized, gin.H{"message": "Authorization header format must be 'Bearer {token}'."})
+		return
+	}
+
+	token := parts[1]
+
+	// Verify the token
+	claims, err := utils.VerifyToken(token)
+	if err != nil {
+		context.JSON(http.StatusUnauthorized, gin.H{"message": "Invalid or expired token.", "details": err.Error()})
+		return
+	}
+
+	// Log claims for debugging
+	fmt.Printf("Claims: %#v\n", claims)
+
+	// Extract user information from claims
+	email, okEmail := claims["email"].(string)
+	userIdFloat, okUserId := claims["userId"].(float64) // JSON unmarshalling often parses numbers to float64
+	if !okEmail || !okUserId {
+		context.JSON(http.StatusUnauthorized, gin.H{"message": "Invalid token claims."})
+		return
+	}
+	userId := int64(userIdFloat)
+
+	fmt.Println("User Email:", email, "UserID:", userId)
+
 	var event models.Event
 	if err := context.ShouldBindJSON(&event); err != nil {
-        context.JSON(400, gin.H{"error": "Could not parse data", "details": err.Error()})
-        return
-    }
+		context.JSON(400, gin.H{"error": "Could not parse data", "details": err.Error()})
+		return
+	}
 
-	event.UserID = 1
+	event.UserID = userId
 	if err := event.Save(); err != nil {
 		context.JSON(500, gin.H{"message": "Could not create event. Try again later.", "details": err.Error()})
 		return
@@ -77,7 +118,7 @@ func updateEvent(context *gin.Context) {
 	context.JSON(200, gin.H{"message": "Updated successfully"})
 }
 
-func deleteEvent (context *gin.Context) {
+func deleteEvent(context *gin.Context) {
 	eventId, err := strconv.ParseInt(context.Param("id"), 10, 64)
 	if err != nil {
 		context.JSON(400, gin.H{"message": "Invalid event ID"})
