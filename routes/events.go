@@ -79,21 +79,38 @@ func updateEvent(context *gin.Context) {
 		return
 	}
 
-	_, err = models.GetEventById(eventId)
+	// Assuming GetEventById not only fetches the event but also returns it
+	event, err := models.GetEventById(eventId)
 	if err != nil {
 		context.JSON(500, gin.H{"message": "Event not found"})
 		return
 	}
 
+	// Extract the logged-in user's ID from the context, set by your AuthMiddleware
+	userId, exists := context.Get("userId")
+	if !exists {
+		context.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to extract user ID from context"})
+		return
+	}
+
+	// Assuming the userId from the context is float64, convert it to int64 (as often needed when extracting from JSON)
+	loggedInUserId := int64(userId.(float64))
+
+	// Check if the logged-in user ID matches the event's user ID
+	if event.UserID != loggedInUserId {
+		context.JSON(http.StatusUnauthorized, gin.H{"message": "You are not authorized to update this event"})
+		return
+	}
+
 	var updatedEvent models.Event
-	if err = context.ShouldBindJSON(&updatedEvent); err != nil {
+	if err := context.ShouldBindJSON(&updatedEvent); err != nil {
 		context.JSON(400, gin.H{"error": "Could not parse event data", "details": err.Error()})
 		return
 	}
 
 	updatedEvent.ID = eventId
-	fmt.Println(updatedEvent)
-	if err = updatedEvent.Update(); err != nil {
+
+	if err := updatedEvent.Update(); err != nil {
 		context.JSON(500, gin.H{"error": "Could not update event", "details": err.Error()})
 		return
 	}
